@@ -1,0 +1,7 @@
+{
+  "name": "Trucounter",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
