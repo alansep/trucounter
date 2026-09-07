@@ -47,6 +47,10 @@ A high-level view of how Trucounter is structured and how its pieces fit togethe
 - **SCSS theming:** Global variables in `src/theme/variables.scss` control the color palette.
 - **Environment configs:** Dev and prod settings are swapped at build time via `src/environments/`.
 
+## Development Rules
+
+For code conventions, naming patterns, documentation standards, and test requirements, see [Development Rules](development-rules.md).
+
 ---
 
 *This document will be expanded with detailed diagrams and module-level architecture as the project grows.*
