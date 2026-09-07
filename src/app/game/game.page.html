@@ -1,0 +1,39 @@
+<ion-content [fullscreen]="true" [scrollY]="false" class="game-content">
+  <div class="game-container">
+    <!-- Team A (Top) -->
+    <div
+      class="team-section team-a"
+      [class.disabled]="isTeamDisabled('A')"
+      [class.winner]="winner() === 'A'"
+      [class.animate]="isAnimating() === 'A'"
+      (click)="addPoint('A')"
+    >
+      <div class="team-name">{{ game()?.teamA?.name }}</div>
+      <div class="score">{{ game()?.teamA?.score ?? 0 }}</div>
+      <div class="winner-message" *ngIf="winner() === 'A'">VITÓRIA!</div>
+    </div>
+
+    <!-- Undo Button (Center) -->
+    <button
+      class="undo-button"
+      [class.visible]="canUndo()"
+      [disabled]="!canUndo()"
+      (click)="undoPoint(); $event.stopPropagation()"
+    >
+      &#x2190;
+    </button>
+
+    <!-- Team B (Bottom) -->
+    <div
+      class="team-section team-b"
+      [class.disabled]="isTeamDisabled('B')"
+      [class.winner]="winner() === 'B'"
+      [class.animate]="isAnimating() === 'B'"
+      (click)="addPoint('B')"
+    >
+      <div class="team-name">{{ game()?.teamB?.name }}</div>
+      <div class="score">{{ game()?.teamB?.score ?? 0 }}</div>
+      <div class="winner-message" *ngIf="winner() === 'B'">VITÓRIA!</div>
+    </div>
+  </div>
+</ion-content>

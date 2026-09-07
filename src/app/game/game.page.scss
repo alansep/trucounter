@@ -1,0 +1,148 @@
+// Color palette
+$black: #000500;
+$dark-coffee: #362417;
+$taupe: #92817A;
+$almond-cream: #F1DABF;
+$snow: #FFFBFF;
+
+.game-content {
+  --background: #{$snow};
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --padding-start: 0;
+  --padding-end: 0;
+}
+
+.game-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100dvh;
+  position: relative;
+}
+
+.team-section {
+  flex: 1 1 50%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 200ms ease-out, transform 200ms ease-out;
+  position: relative;
+
+  &:active:not(.disabled) {
+    transform: scale(0.98);
+  }
+
+  &.team-a {
+    background-color: $dark-coffee;
+    color: $snow;
+
+    &.animate {
+      background-color: $taupe;
+    }
+  }
+
+  &.team-b {
+    background-color: $black;
+    color: $snow;
+
+    &.animate {
+      background-color: $dark-coffee;
+    }
+  }
+
+  &.disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  &.winner {
+    animation: winner-pulse 500ms ease-in-out infinite alternate;
+  }
+
+  .team-name {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .score {
+    font-size: 8rem;
+    font-weight: 700;
+    line-height: 1;
+    transition: transform 200ms ease-out;
+  }
+
+  .winner-message {
+    position: absolute;
+    bottom: 20%;
+    font-size: 2rem;
+    font-weight: 700;
+    color: $almond-cream;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    animation: winner-bounce 500ms ease-in-out infinite;
+  }
+}
+
+.undo-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: $almond-cream;
+  color: $dark-coffee;
+  border: 3px solid $taupe;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 200ms ease-out, visibility 200ms ease-out, transform 200ms ease-out;
+  z-index: 10;
+
+  &.visible {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  &:active:not(:disabled) {
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+
+  .undo-icon {
+    font-size: 1.5rem;
+  }
+}
+
+@keyframes winner-pulse {
+  from {
+    box-shadow: inset 0 0 30px rgba($almond-cream, 0.3);
+  }
+  to {
+    box-shadow: inset 0 0 60px rgba($almond-cream, 0.6);
+  }
+}
+
+@keyframes winner-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
