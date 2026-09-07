@@ -24,6 +24,7 @@ If any answer is "no", stop and ask for clarification before proceeding.
 - [Naming Conventions](#naming-conventions)
 - [Documentation Rules](#documentation-rules)
 - [Test Rules](#test-rules)
+- [Clean Architecture](#clean-architecture)
 - [Spec Template](#spec-template)
 
 ---
@@ -439,6 +440,316 @@ describe('calculateScore', () => {
 **DO:** Aim for 80%+ code coverage on business logic.
 
 **DO:** 100% coverage on critical paths (scoring, game state).
+
+---
+
+## Clean Architecture
+
+This project follows a **Simplified Clean Architecture** pattern to ensure clear separation of concerns, testability, and maintainable code.
+
+### Layers
+
+```
+src/app/
+  core/                    # Domain entities, value objects, business rules
+  domain/
+    usecases/              # Application logic, orchestration
+    gateways/              # Interfaces for external communication
+  infrastructure/
+    adapters/              # Implementations of gateways (API, storage, etc.)
+  presentation/
+    shared/                # Shared Angular components
+  {feature}/               # Feature-specific components and pages
+```
+
+#### Layer Responsibilities
+
+| Layer | Location | Dependencies | Responsibility |
+|-------|----------|--------------|----------------|
+| **Core** | `src/app/core/` | None (zero dependencies) | Domain entities, value objects, business rules, gateway interfaces |
+| **Domain/Usecases** | `src/app/domain/usecases/` | Core only | Application logic, orchestration, use case implementations |
+| **Domain/Gateways** | `src/app/domain/gateways/` | Core only | Interfaces defining how external systems communicate |
+| **Infrastructure/Adapters** | `src/app/infrastructure/adapters/` | Core | Implementations of gateways (API clients, storage, etc.) |
+| **Presentation** | `src/app/presentation/shared/` + `src/app/{feature}/` | Domain, Infrastructure | Angular components, pages, UI logic |
+
+### Dependency Rule
+
+Dependencies ALWAYS point inward toward the core. Never the reverse.
+
+```
+Presentation → Domain (Usecases) → Core
+Presentation → Infrastructure (Adapters) → Core
+Usecases → Core
+Adapters → Core
+```
+
+**DO:** Core is a plain TypeScript folder with zero framework dependencies.
+
+```typescript
+// ✅ Do this — core/entity/player.ts
+export interface Player {
+  id: string;
+  name: string;
+  score: number;
+}
+```
+
+**DON'T:** Never import Angular, Ionic, or any framework module in core.
+
+```typescript
+// ❌ Don't do this — core/entity/player.ts
+import { signal } from '@angular/core';
+
+export interface Player {
+  id: string;
+  name: string;
+  score: signal<number>;  // Angular dependency in core!
+}
+```
+
+**DO:** Gateway interfaces live in core (domain/gateways/).
+
+```typescript
+// ✅ Do this — domain/gateways/score-gateway.ts
+import { Player } from '../../core/entity/player';
+
+export interface ScoreGateway {
+  getPlayers(): Promise<Player[]>;
+  updateScore(playerId: string, score: number): Promise<void>;
+}
+```
+
+**DO:** Adapters implement gateways and live in infrastructure.
+
+```typescript
+// ✅ Do this — infrastructure/adapters/api-score-gateway.ts
+import { Player } from '../../core/entity/player';
+import { ScoreGateway } from '../../domain/gateways/score-gateway';
+
+export class ApiScoreGateway implements ScoreGateway {
+  async getPlayers(): Promise<Player[]> {
+    return fetch('/api/players').then(r => r.json());
+  }
+
+  async updateScore(playerId: string, score: number): Promise<void> {
+    await fetch(`/api/players/${playerId}/score`, {
+      method: 'PATCH',
+      body: JSON.stringify({ score }),
+    });
+  }
+}
+```
+
+### Communication Pattern
+
+Data flows unidirectionally: **Presentation → Usecases → Gateways → Adapters → External World**
+
+**DO:** Use Angular signals for reactive state in presentation.
+
+```typescript
+// ✅ Do this — presentation/score-page.ts
+export class ScorePage {
+  private readonly scoreUsecase = inject(ScoreUsecase);
+  protected readonly players = signal<Player[]>([]);
+
+  async loadPlayers(): Promise<void> {
+    const players = await this.scoreUsecase.getActivePlayers();
+    this.players.set(players);
+  }
+}
+```
+
+**DO:** Use dependency injection for wiring.
+
+```typescript
+// ✅ Do this — score.module.ts
+@NgModule({
+  providers: [
+    { provide: ScoreGateway, useClass: ApiScoreGateway },
+    ScoreUsecase,
+  ],
+})
+export class ScorePageModule {}
+```
+
+### Lightweight Variant
+
+For simple features (CRUD operations only, no multi-step business logic, no external API calls), usecases and gateway implementations can be merged into a single service.
+
+**When to use:**
+- Simple CRUD (Create, Read, Update, Delete)
+- No multi-step business logic
+- No external API calls (or single API endpoint)
+
+**When NOT to use:**
+- Multiple steps or business rules
+- External API integration
+- Complex data transformations
+
+```typescript
+// ✅ Lightweight variant — feature/score-simple.service.ts
+// Gateway interface still in core, but implementation merged with usecase
+import { Player } from '../../core/entity/player';
+
+@Injectable({ providedIn: 'root' })
+export class ScoreSimpleService {
+  private readonly api = inject(HttpClient);
+
+  async getPlayers(): Promise<Player[]> {
+    return this.api.get<Player[]>('/api/players').toPromise();
+  }
+
+  async addPoint(playerId: string): Promise<void> {
+    const players = await this.getPlayers();
+    const player = players.find(p => p.id === playerId);
+    if (player) {
+      await this.api.patch(`/api/players/${playerId}`, {
+        score: player.score + 1,
+      }).toPromise();
+    }
+  }
+}
+```
+
+### Anti-Patterns
+
+These are common mistakes. Avoid them.
+
+**1. Importing Angular modules in core**
+
+```typescript
+// ❌ Don't do this
+// core/entity/score.ts
+import { signal } from '@angular/core';
+
+export class Score {
+  value = signal(0);
+}
+```
+
+```typescript
+// ✅ Do this
+// core/entity/score.ts
+export class Score {
+  value = 0;
+}
+```
+
+**2. Putting HTTP calls directly in components**
+
+```typescript
+// ❌ Don't do this
+// presentation/score.page.ts
+export class ScorePage {
+  async loadPlayers() {
+    const response = await fetch('/api/players');
+    this.players = await response.json();
+  }
+}
+```
+
+```typescript
+// ✅ Do this
+// presentation/score.page.ts
+export class ScorePage {
+  private readonly scoreUsecase = inject(ScoreUsecase);
+
+  async loadPlayers() {
+    const players = await this.scoreUsecase.getActivePlayers();
+    this.players.set(players);
+  }
+}
+```
+
+**3. Putting business logic in components**
+
+```typescript
+// ❌ Don't do this
+// presentation/score.page.ts
+export class ScorePage {
+  calculateWinner(players: Player[]): Player {
+    return players.reduce((a, b) => a.score > b.score ? a : b);
+  }
+}
+```
+
+```typescript
+// ✅ Do this
+// domain/usecases/score-usecase.ts
+export class ScoreUsecase {
+  calculateWinner(players: Player[]): Player {
+    return players.reduce((a, b) => a.score > b.score ? a : b);
+  }
+}
+```
+
+**4. Making core depend on infrastructure**
+
+```typescript
+// ❌ Don't do this
+// core/entity/player.ts
+import { ApiPlayerService } from '../../infrastructure/api-player-service';
+
+export class Player {
+  constructor(private api: ApiPlayerService) {}
+}
+```
+
+```typescript
+// ✅ Do this
+// core/entity/player.ts
+export interface Player {
+  id: string;
+  name: string;
+  score: number;
+}
+```
+
+### Feature Example: Score Tracking
+
+Here's how a complete feature is structured across all layers:
+
+```
+src/app/
+  core/
+    entity/
+      player.ts                    # Player interface
+      card.ts                      # Card interface
+  domain/
+    usecases/
+      score-usecase.ts             # Score calculation logic
+      game-usecase.ts              # Game flow orchestration
+    gateways/
+      score-gateway.ts             # ScoreGateway interface
+      game-gateway.ts              # GameGateway interface
+  infrastructure/
+    adapters/
+      api-score-gateway.ts         # HTTP implementation of ScoreGateway
+      local-game-gateway.ts        # Local storage implementation
+  presentation/
+    shared/
+      score-display/               # Shared score display component
+  score/
+    score.module.ts                # Feature module with DI
+    score-routing.module.ts        # Lazy-loaded routing
+    score.page.ts                  # Main page component
+    score.page.html                # Template
+    score.page.scss                # Styles
+    score.page.spec.ts             # Tests
+```
+
+### Clean Architecture Checklist
+
+Before implementing any feature, verify:
+
+- [ ] Core entities have zero framework dependencies (no Angular, no Ionic)
+- [ ] Gateway interfaces live in `domain/gateways/`, implementations in `infrastructure/adapters/`
+- [ ] Usecases depend only on core (entities + gateway interfaces)
+- [ ] Presentation depends on usecases and adapters, never on core directly
+- [ ] Dependency injection wires adapters to gateway interfaces
+- [ ] Business logic is in usecases, not in components
+- [ ] HTTP/fetch calls are in adapters, not in components
+- [ ] Lightweight variant used only for simple CRUD (no complex logic)
 
 ---
 
