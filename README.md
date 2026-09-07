@@ -112,11 +112,12 @@ These symptoms indicate a stale Vite cache. To fix:
 
 | Command | Description |
 |---------|-------------|
-| `ionic serve` | Start the development server with live reload |
-| `ionic build` | Build the app for production |
-| `ionic build --watch` | Build in watch mode for development |
-| `ng test` | Run unit tests via Vitest |
-| `ng lint` | Run ESLint on the source code |
+| `npm start` | Alias for `ng serve` — starts the dev server with live reload |
+| `npm run build` | Alias for `ng build` — builds the app for production |
+| `npm run watch` | Alias for `ng build --watch` — rebuilds on file changes (development config) |
+| `npm test` | Alias for `ng test` — runs unit tests via Vitest |
+| `npm run lint` | Alias for `ng lint` — lints the source code with ESLint |
+| `ng` | Direct access to the Angular CLI for advanced commands |
 
 ## Roadmap
 
