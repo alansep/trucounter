@@ -1,6 +1,8 @@
 .refinamentos/
 node_modules/
 .angular/
-.DS_Store/
+.DS_Store
 dist/
+www/
+ios/
 coverage/
