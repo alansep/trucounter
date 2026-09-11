@@ -12,7 +12,20 @@ This guide helps AI coding agents understand the project conventions, structure,
 
 ## Before You Write Code
 
-**Read [Development Rules](development-rules.md) first.** It contains:
+**⚠️ FIRST: Read [Guard de Desenvolvimento](guard.md).**
+
+The guard contains:
+- Official stack versions (Ionic, Angular, Capacitor)
+- Allowed and forbidden Ionic components
+- Allowed Capacitor APIs
+- Angular patterns (NgModule mandatory)
+- Code examples (do's and don'ts)
+
+You MUST confirm "li e concordo com docs/guard.md" before ANY code change.
+
+---
+
+**THEN: Read [Development Rules](development-rules.md).** It contains:
 
 - Code rules (typing, methods, SOLID, Angular patterns)
 - Structure and naming conventions
