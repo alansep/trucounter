@@ -1,9 +1,13 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { GameUsecase } from '../domain/usecases/game-usecase';
 import { HapticGateway } from '../domain/gateways/haptic-gateway';
 import { HAPTIC_GATEWAY } from '../domain/gateways/haptic-gateway.token';
+import { DisplayPreferenceUsecase } from '../domain/usecases/display-preference-usecase';
+import { OrientationGateway } from '../domain/gateways/orientation-gateway';
+import { ORIENTATION_GATEWAY } from '../domain/gateways/orientation-gateway.token';
 import { Game } from '../core/entity/game';
 import { TeamSide } from '../core/entity/action';
+import { DisplayView } from '../core/entity/display-preference';
 
 @Component({
   selector: 'app-game',
@@ -11,23 +15,20 @@ import { TeamSide } from '../core/entity/action';
   styleUrls: ['./game.page.scss'],
   standalone: false,
 })
-export class GamePage implements OnInit {
+export class GamePage {
   private readonly gameUsecase = inject(GameUsecase);
   private readonly hapticGateway = inject<HapticGateway>(HAPTIC_GATEWAY);
+  private readonly displayPreferenceUsecase = inject(DisplayPreferenceUsecase);
+  private readonly orientationGateway = inject<OrientationGateway>(ORIENTATION_GATEWAY);
 
   readonly game = signal<Game | null>(null);
   readonly winner = signal<TeamSide | null>(null);
   readonly isAnimating = signal<TeamSide | null>(null);
+  readonly isHorizontal = signal(false);
 
-  async ngOnInit(): Promise<void> {
-    const existingGame = await this.gameUsecase.getCurrentGame();
-    if (existingGame) {
-      this.game.set(existingGame);
-      await this.checkWinner();
-    } else {
-      const newGame = await this.gameUsecase.createNewGame();
-      this.game.set(newGame);
-    }
+  async ionViewWillEnter(): Promise<void> {
+    await this.loadDisplayPreference();
+    await this.loadGame();
   }
 
   async addPoint(team: TeamSide): Promise<void> {
@@ -67,6 +68,35 @@ export class GamePage implements OnInit {
 
     const teamData = team === 'A' ? currentGame.teamA : currentGame.teamB;
     return teamData.score >= 12;
+  }
+
+  private async loadDisplayPreference(): Promise<void> {
+    const view: DisplayView = await this.displayPreferenceUsecase.getView();
+    this.isHorizontal.set(view === 'horizontal');
+    await this.lockOrientation(view);
+  }
+
+  private async lockOrientation(view: DisplayView): Promise<void> {
+    try {
+      if (view === 'horizontal') {
+        await this.orientationGateway.lock('landscape');
+      } else {
+        await this.orientationGateway.lock('portrait');
+      }
+    } catch {
+      // Orientation lock not supported on this platform — silently ignore
+    }
+  }
+
+  private async loadGame(): Promise<void> {
+    const existingGame = await this.gameUsecase.getCurrentGame();
+    if (existingGame) {
+      this.game.set(existingGame);
+      await this.checkWinner();
+    } else {
+      const newGame = await this.gameUsecase.createNewGame();
+      this.game.set(newGame);
+    }
   }
 
   private async checkWinner(): Promise<void> {

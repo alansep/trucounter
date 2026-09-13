@@ -1,6 +1,6 @@
 <ion-content [fullscreen]="true" [scrollY]="false" class="game-content">
-  <div class="game-container">
-    <!-- Team A (Top) -->
+  <div class="game-container" [class.horizontal]="isHorizontal()">
+    <!-- Team A -->
     <div
       class="team-section team-a"
       [class.disabled]="isTeamDisabled('A')"
@@ -23,7 +23,7 @@
       &#x2190;
     </button>
 
-    <!-- Team B (Bottom) -->
+    <!-- Team B -->
     <div
       class="team-section team-b"
       [class.disabled]="isTeamDisabled('B')"

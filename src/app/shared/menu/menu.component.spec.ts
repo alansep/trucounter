@@ -16,17 +16,24 @@ class StubGameComponent {}
   template: '',
   standalone: false,
 })
+class StubSettingsComponent {}
+
+@Component({
+  template: '',
+  standalone: false,
+})
 class StubOtherComponent {}
 
 describe('MenuComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [MenuComponent, StubGameComponent, StubOtherComponent],
+      declarations: [MenuComponent, StubGameComponent, StubSettingsComponent, StubOtherComponent],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [
         IonicModule.forRoot(),
         RouterModule.forRoot([
           { path: 'game', component: StubGameComponent },
+          { path: 'settings', component: StubSettingsComponent },
           { path: 'other', component: StubOtherComponent },
         ]),
       ],
@@ -58,7 +65,7 @@ describe('MenuComponent', () => {
     expect(menu.getAttribute('side')).toEqual('start');
   });
 
-  it('should render Trucounter header and single Jogo item', async () => {
+  it('should render Trucounter header with Jogo and Configurações items', async () => {
     // Arrange
     const fixture = TestBed.createComponent(MenuComponent);
 
@@ -72,12 +79,13 @@ describe('MenuComponent', () => {
     const html: string = fixture.nativeElement.innerHTML as string;
     expect(html).toContain('Trucounter');
     expect(html).toContain('Jogo');
+    expect(html).toContain('Configurações');
 
     const labels = fixture.nativeElement.querySelectorAll('ion-label');
-    expect(labels.length).toEqual(1);
+    expect(labels.length).toEqual(2);
   });
 
-  it('should link Jogo to /game inside ion-menu-toggle', async () => {
+  it('should link Jogo to /game and Configurações to /settings inside ion-menu-toggle', async () => {
     // Arrange
     const fixture = TestBed.createComponent(MenuComponent);
     fixture.detectChanges();
@@ -91,12 +99,14 @@ describe('MenuComponent', () => {
       .map((el) => el.injector.get(RouterLink));
 
     // Assert
-    expect(links.length).toEqual(1);
+    expect(links.length).toEqual(2);
     expect(router.serializeUrl(links[0].urlTree!)).toEqual('/game');
+    expect(router.serializeUrl(links[1].urlTree!)).toEqual('/settings');
 
-    const toggle = fixture.nativeElement.querySelector('ion-menu-toggle');
-    expect(toggle).toBeTruthy();
-    expect(toggle.querySelector('ion-item')).toBeTruthy();
+    const toggles = fixture.nativeElement.querySelectorAll('ion-menu-toggle');
+    expect(toggles.length).toEqual(2);
+    expect(toggles[0].querySelector('ion-item')).toBeTruthy();
+    expect(toggles[1].querySelector('ion-item')).toBeTruthy();
   });
 
   it('should navigate to /game when clicking Jogo', async () => {
@@ -111,7 +121,7 @@ describe('MenuComponent', () => {
     fixture.detectChanges();
 
     // Act
-    const item = fixture.debugElement.query(By.directive(RouterLink));
+    const item = fixture.debugElement.queryAll(By.directive(RouterLink))[0];
     expect(item).toBeTruthy();
     item.nativeElement.click();
     fixture.detectChanges();
@@ -119,5 +129,27 @@ describe('MenuComponent', () => {
 
     // Assert
     expect(router.url).toEqual('/game');
+  });
+
+  it('should navigate to /settings when clicking Configurações', async () => {
+    // Arrange
+    const router = TestBed.inject(Router);
+    const fixture = TestBed.createComponent(MenuComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    await router.navigateByUrl('/other');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // Act
+    const item = fixture.debugElement.queryAll(By.directive(RouterLink))[1];
+    expect(item).toBeTruthy();
+    item.nativeElement.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    // Assert
+    expect(router.url).toEqual('/settings');
   });
 });

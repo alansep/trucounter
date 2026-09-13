@@ -19,6 +19,34 @@ $snow: #FFFBFF;
   height: 100%;
   min-height: 100dvh;
   position: relative;
+
+  &.horizontal {
+    flex-direction: row;
+
+    .team-section {
+      flex: 1 1 50%;
+
+      .team-name {
+        font-size: clamp(0.9rem, 3.5vw, 1.5rem);
+      }
+
+      .score {
+        font-size: clamp(3rem, 15vw, 8rem);
+      }
+
+      .winner-message {
+        bottom: 15%;
+        font-size: clamp(1rem, 4vw, 2rem);
+        letter-spacing: 2px;
+      }
+    }
+
+    .undo-button {
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+  }
 }
 
 .team-section {

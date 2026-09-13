@@ -26,6 +26,7 @@
     "@capacitor/ios": "^8.5.1",
     "@capacitor/keyboard": "8.0.5",
     "@capacitor/preferences": "^8.0.1",
+    "@capacitor/screen-orientation": "^8.0.1",
     "@capacitor/status-bar": "8.0.3",
     "@ionic/angular": "^9.0.0",
     "ionicons": "^8.1.0",

@@ -12,6 +12,12 @@ import { MenuComponent } from './shared/menu/menu.component';
 })
 class StubGameComponent {}
 
+@Component({
+  template: '',
+  standalone: false,
+})
+class StubSettingsComponent {}
+
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -19,11 +25,14 @@ describe('AppComponent', () => {
       // TestBed com Vitest não resolve o componente exportado pelo módulo
       // importado — ver DebugApp vs DebugApp2. O wiring via SharedModule
       // no AppModule real é validado pelo `ng build`.
-      declarations: [AppComponent, MenuComponent, StubGameComponent],
+      declarations: [AppComponent, MenuComponent, StubGameComponent, StubSettingsComponent],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
       imports: [
         IonicModule.forRoot(),
-        RouterModule.forRoot([{ path: 'game', component: StubGameComponent }]),
+        RouterModule.forRoot([
+          { path: 'game', component: StubGameComponent },
+          { path: 'settings', component: StubSettingsComponent },
+        ]),
       ],
     }).compileComponents();
   });
@@ -53,7 +62,7 @@ describe('AppComponent', () => {
     expect(outlet).toBeTruthy();
   });
 
-  it('should render menu header and Jogo item linked to /game', async () => {
+  it('should render menu header with Jogo and Configurações items', async () => {
     // Arrange
     const fixture = TestBed.createComponent(AppComponent);
 
@@ -68,12 +77,17 @@ describe('AppComponent', () => {
     expect(menu).toBeTruthy();
     expect(menu.innerHTML).toContain('Trucounter');
     expect(menu.innerHTML).toContain('Jogo');
+    expect(menu.innerHTML).toContain('Configurações');
 
-    // Assert — item navega para /game (atributo lowercase no jsdom)
-    const item = menu.querySelector('ion-item') as HTMLElement;
-    expect(item).toBeTruthy();
-    const routerLink = item.getAttribute('routerLink') ?? item.getAttribute('routerlink');
-    expect(routerLink).toEqual('/game');
+    // Assert — items navegam para rotas corretas (atributo lowercase no jsdom)
+    const items = menu.querySelectorAll('ion-item') as NodeListOf<HTMLElement>;
+    expect(items.length).toEqual(2);
+
+    const routerLinkA = items[0].getAttribute('routerLink') ?? items[0].getAttribute('routerlink');
+    expect(routerLinkA).toEqual('/game');
+
+    const routerLinkB = items[1].getAttribute('routerLink') ?? items[1].getAttribute('routerlink');
+    expect(routerLinkB).toEqual('/settings');
   });
 
   it('should auto-close the menu via ion-menu-toggle', async () => {
@@ -86,8 +100,9 @@ describe('AppComponent', () => {
     fixture.detectChanges();
 
     // Assert — ion-menu-toggle fecha o menu automaticamente após o clique
-    const toggle = fixture.nativeElement.querySelector('app-menu ion-menu-toggle');
-    expect(toggle).toBeTruthy();
-    expect(toggle.querySelector('ion-item')).toBeTruthy();
+    const toggles = fixture.nativeElement.querySelectorAll('app-menu ion-menu-toggle');
+    expect(toggles.length).toEqual(2);
+    expect(toggles[0].querySelector('ion-item')).toBeTruthy();
+    expect(toggles[1].querySelector('ion-item')).toBeTruthy();
   });
 });
