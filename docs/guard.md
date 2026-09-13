@@ -29,6 +29,11 @@ Estes são os componentes Ionic efetivamente usados no projeto. **Use apenas est
 | `<ion-toolbar>` | Barra de ferramentas |
 | `<ion-title>` | Título na toolbar |
 | `<ion-content>` | Conteúdo principal |
+| `<ion-menu>` | Menu lateral (base extensível, `contentId="main-content"`) |
+| `<ion-menu-toggle>` | Fecha o menu após navegação |
+| `<ion-list>` | Lista de itens do menu |
+| `<ion-item>` | Item de navegação do menu (`routerLink`) |
+| `<ion-label>` | Rótulo do item do menu |
 
 ## Componentes Ionic Vedados
 

@@ -1,56 +1,93 @@
-import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
-
-import { Router, RouterLink, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { IonicModule } from '@ionic/angular/lazy';
 
 import { AppComponent } from './app.component';
+import { MenuComponent } from './shared/menu/menu.component';
+
+@Component({
+  template: '',
+  standalone: false,
+})
+class StubGameComponent {}
 
 describe('AppComponent', () => {
-
-
   beforeEach(async () => {
-
     await TestBed.configureTestingModule({
-      declarations: [AppComponent],
+      // Declaração direta (em vez de importar o SharedModule) porque o
+      // TestBed com Vitest não resolve o componente exportado pelo módulo
+      // importado — ver DebugApp vs DebugApp2. O wiring via SharedModule
+      // no AppModule real é validado pelo `ng build`.
+      declarations: [AppComponent, MenuComponent, StubGameComponent],
       schemas: [CUSTOM_ELEMENTS_SCHEMA],
-      imports: [IonicModule.forRoot(), RouterModule.forRoot([])],
+      imports: [
+        IonicModule.forRoot(),
+        RouterModule.forRoot([{ path: 'game', component: StubGameComponent }]),
+      ],
     }).compileComponents();
   });
 
   it('should create the app', () => {
+    // Arrange + Act
     const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
+
+    // Assert
+    expect(fixture.componentInstance).toBeTruthy();
   });
 
-  // TODO(ROU-10799): Fix the flaky test.
-  it.skip('should have menu labels', () => {
+  it('should render menu as sibling of the main outlet', async () => {
+    // Arrange
     const fixture = TestBed.createComponent(AppComponent);
+
+    // Act
     fixture.detectChanges();
-    const app = fixture.nativeElement;
-    const menuItems = app.querySelectorAll('ion-label');
-    expect(menuItems.length).toEqual(12);
-    expect(menuItems[0].innerHTML).toContain('Inbox');
-    expect(menuItems[1].innerHTML).toContain('Outbox');
-  });
-
-  it('should have urls', () => {
-    const fixture = TestBed.createComponent(AppComponent);
+    await fixture.whenStable();
     fixture.detectChanges();
-    const app = fixture.nativeElement;
-    expect(app.querySelectorAll('ion-item').length).toEqual(12);
-    // Ionic applies the rendered href through its own async write queue, so
-    // reading the DOM attribute is flaky (FW-6264). Assert the routerLink
-    // binding directly, which resolves synchronously.
-    const router = TestBed.inject(Router);
-    const links = fixture.debugElement
-      .queryAll(By.directive(RouterLink))
-      .map((el) => el.injector.get(RouterLink));
-    expect(links.length).toEqual(6);
-    expect(router.serializeUrl(links[0].urlTree!)).toEqual('/folder/Inbox');
-    expect(router.serializeUrl(links[1].urlTree!)).toEqual('/folder/Outbox');
+
+    // Assert
+    const menu = fixture.nativeElement.querySelector('app-menu');
+    expect(menu).toBeTruthy();
+
+    const outlet = fixture.nativeElement.querySelector('ion-router-outlet#main-content');
+    expect(outlet).toBeTruthy();
   });
 
+  it('should render menu header and Jogo item linked to /game', async () => {
+    // Arrange
+    const fixture = TestBed.createComponent(AppComponent);
+
+    // Act
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // Assert — Stencil remove o textContent do light DOM no jsdom,
+    // então verifica via innerHTML (comportamento documentado FW-6264).
+    const menu = fixture.nativeElement.querySelector('app-menu') as HTMLElement;
+    expect(menu).toBeTruthy();
+    expect(menu.innerHTML).toContain('Trucounter');
+    expect(menu.innerHTML).toContain('Jogo');
+
+    // Assert — item navega para /game (atributo lowercase no jsdom)
+    const item = menu.querySelector('ion-item') as HTMLElement;
+    expect(item).toBeTruthy();
+    const routerLink = item.getAttribute('routerLink') ?? item.getAttribute('routerlink');
+    expect(routerLink).toEqual('/game');
+  });
+
+  it('should auto-close the menu via ion-menu-toggle', async () => {
+    // Arrange
+    const fixture = TestBed.createComponent(AppComponent);
+
+    // Act
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // Assert — ion-menu-toggle fecha o menu automaticamente após o clique
+    const toggle = fixture.nativeElement.querySelector('app-menu ion-menu-toggle');
+    expect(toggle).toBeTruthy();
+    expect(toggle.querySelector('ion-item')).toBeTruthy();
+  });
 });
